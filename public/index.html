@@ -1,8 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>Hello, world!</title>
+    <title>Who Vote Me? -- By Phinx.CN</title>
+    <script type="application/javascript" src="js/jquery-1.12.3.min.js"></script>
+    <style type="text/css">
+        ul{
+            list-style-type: decimal;
+        }
+        li{
+            float: left;
+            margin-left: 20px;
+            width:270px;
+        }
+    </style>
+
 </head>
 <body>
-<h1>Hello, world!</h1>
+<table width="100%" border="1">
+    <tr><td>Your Node Address</td><td><input type="text" id="myAddr"  value="125517009775967226L" /></td><td><input id="submit" type="button" value="Who Vote Me?"/></td></tr>
+    <tr><td>Your Node Name</td><td id="myName" colspan="2" align="center" valign="middle"></td></tr>
+    <tr><td colspan="3" align="center" valign="middle">Accounts List</td></tr>
+    <tr><td colspan="3" id="list"></td></tr>
+</table>
+<div id="myDiv"></div>
+<script type="application/javascript">
+    function getName(addr){
+        var  htmlobj=$.ajax({url:"/api/accounts?address="+addr,async:false});
+        var r=JSON.parse(htmlobj.responseText);
+        if(r.success!=true){
+            $("#myDiv").html("Request unsuccessful,try again later");
+            return;
+        }
+        return r;
+    }
+    var pubkey="";
+    $(document).ready(function(){
+        $("#submit").click(function(){
+            var jobj=getName($("#myAddr").val());
+            if(jobj.success!=true){
+                $("#myDiv").html("Request unsuccessful,try again later");
+                return;
+            }
+            $("#myName").html(jobj.account.username);
+            pubkey=jobj.account.publicKey;
+            htmlobj=$.ajax({url:"/api/delegates/voters?publicKey="+pubkey,async:false});
+            var jobj2=JSON.parse(htmlobj.responseText);
+            if(jobj2.success!=true){
+                $("#myDiv").html("Request unsuccessful,try again later");
+                return;
+            }
+            var listbody="<ul>";
+            var o=null;
+            for(var i=0;i<jobj2.accounts.length;i++){
+                o=getName(jobj2.accounts[i].address);
+                if(o.account.username)
+                {
+                    listbody += "<li>" + getName(jobj2.accounts[i].address).account.username + "</li>";
+                }
+                else{
+                    listbody += "<li>" + getName(jobj2.accounts[i].address).account.address + "</li>";
+                }
+            }
+            listbody+="</ul>";
+            $("#list").html(listbody);
+        });
+    });
+</script>
 </body>
 </html>
